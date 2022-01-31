@@ -39,9 +39,9 @@ void loop() {
 
 ___
 ### **Controll**
-Left AnalogStick :  GO / BACK
-Right AnalogStick :  LEFT / RIGHT
-L button : Turn Signal on left side.
-R button : Turn Signal on right side.
-◯ button : Front light. 
+- Left AnalogStick :  GO / BACK
+- Right AnalogStick :  LEFT / RIGHT
+- L button : Turn Signal on left side.
+- R button : Turn Signal on right side.
+- ◯ button : Front light. 
 
