@@ -60,10 +60,10 @@ bool is_remaining_charge_enough = true;
 bool is_turn_right = false;
 bool is_turn_left = false;
 
-int speed = 0;
 
 //Callback function When a button pushed
 void received(){
+  int speed = 0;
   int stick_left_y = Ps3.data.analog.stick.ly;
   int stick_right_x = Ps3.data.analog.stick.rx;
   
