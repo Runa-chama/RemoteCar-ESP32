@@ -35,11 +35,20 @@
 #define turn_lump_l1 15
 #define turn_lump_l2 22
 
-//led_pins
-const int leds[] = {led_front_1,led_front_2,led_back_1,led_back_2,led_brake_1,led_brake_2,turn_lump_r1,turn_lump_r2,turn_lump_l1,turn_lump_l2};
+//Adjust the value to match the motor rating
+#define MAX_SPEED 140
 
+//led_pins
+const int leds[] = {  led_front_1,  led_front_2,
+                      led_back_1,   led_back_2,
+                      led_brake_1,  led_brake_2,
+                      turn_lump_r1, turn_lump_r2,
+                      turn_lump_l1, turn_lump_l2};
+
+//Min Voltage of 2cell
 const int battery_min_voltage = 2.10;
 
+//Servo
 int minUs = 500;
 int maxUs = 2400;
 Servo servo;
@@ -54,17 +63,17 @@ bool is_turn_left = false;
 int speed = 0;
 
 //Callback function When a button pushed
-void notify(){
+void received(){
   int stick_left_y = Ps3.data.analog.stick.ly;
   int stick_right_x = Ps3.data.analog.stick.rx;
   
   if(is_remaining_charge_enough)
   {
     int cache_speed = speed;
-    double max_speed = 140;
+    double max_speed = MAX_SPEED;
     speed = stick_left_y >= 0 ? map(stick_left_y,10,128,0,max_speed) : map(-stick_left_y,10,128,0,max_speed);
 
-    if(stick_left_y < 65 && stick_left_y > -65)
+    if(stick_left_y < 65 && stick_left_y > -65)//Brake lump
     {
       digitalWrite(led_brake_1,ON);
       digitalWrite(led_brake_2,ON);
@@ -106,17 +115,17 @@ void notify(){
       int angle = 90 - map(stick_right_x,10,180,0,60);
       servo.write(angle);
     }
-    else
+    else //default
     {
       servo.write(90);
     }
     
-    if(Ps3.data.button.l1)
+    if(Ps3.data.button.l1)//Left turn signal
     {
       is_turn_right = false;
       is_turn_left = true;
     }
-    else if(Ps3.data.button.r1)
+    else if(Ps3.data.button.r1)//Right turn signal
     {
       is_turn_right = true;
       is_turn_left = false;
@@ -126,7 +135,7 @@ void notify(){
       is_turn_right = false;
       is_turn_left = false;
     }
-    if(Ps3.data.button.circle)
+    if(Ps3.data.button.circle)//Front light
     {
       digitalWrite(led_front_1,!digitalRead(led_front_1));
       digitalWrite(led_front_2,!digitalRead(led_front_2));
@@ -171,10 +180,6 @@ void IRAM_ATTR onTimer() {
 }
 
 void setup(){
-  pinMode(12,OUTPUT);
-  digitalWrite(12,HIGH);
-  delay(100);
-  digitalWrite(12,LOW);
   for(int led : leds)
   {
     pinMode(led,OUTPUT_OPEN_DRAIN);
@@ -189,6 +194,7 @@ void setup(){
   ledcAttachPin(m1,m_ch1);//motor ch1
   ledcAttachPin(m2,m_ch2);//motor ch2
   
+  //Timer for turn signal
   timer = timerBegin(0, 80, true);
   timerAttachInterrupt(timer, &onTimer, true);
   timerAlarmWrite(timer, 250000, true);
@@ -198,7 +204,7 @@ void setup(){
   servo.attach(servo_pin,minUs,maxUs);
 
   Serial.begin(115200);
-  Ps3.attach(notify); //Set callback function
+  Ps3.attach(received); //Set callback function
   Ps3.begin("00:00:00:00:00:00"); //Bluetooth MAC Address
 }
 
@@ -209,6 +215,8 @@ void loop(){
   battery_voltage *= 3.3;
   Serial.println(analogRead(battery_pin));
   Serial.println(battery_voltage);
+  
+  //Check battery voltage to prevent over-discharge
   if(battery_voltage < battery_min_voltage) 
     is_remaining_charge_enough = false;
   else
